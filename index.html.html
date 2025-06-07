@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Empréstimos Integrado</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #1c1e21; } .container { max-width: 800px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); } h1, h2 { text-align: center; color: #1877f2; } form { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; } .form-group { flex: 1 1 200px; } label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; } input[type="text"], input[type="date"], input[type="number"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #dddfe2; box-sizing: border-box; } .main-button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; background-color: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; } .main-button:hover:not(:disabled) { background-color: #166fe5; } .main-button:disabled { background-color: #a0bdf1; cursor: not-allowed; } .tab-nav { display: flex; border-bottom: 2px solid #dddfe2; margin-bottom: 20px; } .tab-link { background: none; border: none; padding: 15px 20px; cursor: pointer; font-size: 16px; font-weight: 600; color: #606770; border-bottom: 3px solid transparent; margin-bottom: -2px; } .tab-link.active { color: #1877f2; border-bottom-color: #1877f2; } .tab-content { display: none; } .tab-content.active { display: block; } .emprestimo-item { padding: 15px; margin-bottom: 10px; border-radius: 6px; border-left: 5px solid; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background-color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); } .status-pendente { border-left-color: #ffc107; } .status-atrasado { border-left-color: #dc3545; } .status-pago { border-left-color: #28a745; } .botoes-acao { display: flex; gap: 10px; } .btn-acao { padding: 8px 12px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; } .btn-pagar { background-color: #28a745; } .btn-apagar { background-color: #dc3545; } .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; } .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #3498db; width: 50px; height: 50px; animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay"><div class="loader"></div></div>
+    <div class="container">
+        <h1>Controle de Empréstimos</h1>
+        <h2 id="total-lucro" style="text-align: center; color: #1a73e8; margin-bottom: 20px;"></h2>
+        
+        <form id="loanForm">
+            <div class="form-group"><label for="nome">Nome do Cliente:</label><input type="text" id="nome" required></div>
+            <div class="form-group"><label for="credor">Seu Nome (Credor):</label><input type="text" id="credor" required></div>
+            <div class="form-group"><label for="valor">Valor Emprestado (R$):</label><input type="number" id="valor" placeholder="1000.00" required></div>
+            <div class="form-group"><label for="dataEmprestimo">Data do Empréstimo:</label><input type="date" id="dataEmprestimo" required></div>
+            <div class="form-group"><label for="dataPagamento">Data do Pagamento:</label><input type="date" id="dataPagamento" required></div>
+            <div style="width: 100%;"><button type="submit" class="main-button">Adicionar Empréstimo</button></div>
+        </form>
+        <hr style="border: none; border-top: 1px solid #dddfe2; margin: 30px 0;">
+        <div class="tab-nav">
+            <button class="tab-link active" onclick="openTab(event, 'ativos')">Empréstimos Ativos</button>
+            <button class="tab-link" onclick="openTab(event, 'pagos')">Histórico de Pagos</button>
+        </div>
+        <div id="ativos" class="tab-content active"><h2 >Pendentes e Atrasados</h2><div id="listaAtivos"></div></div>
+        <div id="pagos" class="tab-content"><h2>Já Pagos</h2><div id="listaPagos"></div></div>
+    </div>
+
+    <script>
+        // ##################################################################
+        // COLE A URL DA SUA API DO GOOGLE APPS SCRIPT AQUI
+        const URL_DA_API = "https://script.google.com/macros/s/AKfycbzTI8eaaKsKDoo6kb1rYwVQzUf3TxTZ6TsVknRENOQPdANyfiRRyi2t9vF8YrRVU0bQYw/exec";
+        // ##################################################################
+
+        let emprestimosAtuais = [];
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('ativos').style.display = 'block';
+            await buscarEmprestimosDaNuvem();
+        });
+        
+        document.getElementById('loanForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            salvarEmprestimo();
+        });
+
+        const showLoading = (show) => { loadingOverlay.style.display = show ? 'flex' : 'none'; };
+
+        async function buscarEmprestimosDaNuvem() {
+            showLoading(true);
+            const listaAtivosDiv = document.getElementById('listaAtivos');
+            listaAtivosDiv.innerHTML = '';
+            try {
+                const response = await fetch(URL_DA_API);
+                emprestimosAtuais = await response.json();
+                renderizarListas();
+            } catch (error) {
+                console.error("Erro ao buscar dados da nuvem:", error);
+                listaAtivosDiv.innerHTML = '<p style="text-align:center; color: red;">Erro ao carregar os dados. Verifique a URL da API e sua conexão.</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function salvarEmprestimo() {
+            const formButton = document.querySelector("#loanForm button");
+            formButton.disabled = true;
+            showLoading(true);
+            const novoEmprestimo = {
+                id: Date.now(),
+                nome: document.getElementById('nome').value,
+                credor: document.getElementById('credor').value,
+                valor: document.getElementById('valor').value,
+                dataEmprestimo: document.getElementById('dataEmprestimo').value,
+                dataPagamento: document.getElementById('dataPagamento').value,
+                status: 'pendente'
+            };
+
+            if (!novoEmprestimo.dataEmprestimo || !novoEmprestimo.dataPagamento || !novoEmprestimo.nome || !novoEmprestimo.credor || !novoEmprestimo.valor) {
+                alert("Por favor, preencha todos os campos do formulário.");
+                formButton.disabled = false;
+                showLoading(false);
+                return;
+            }
+
+            try {
+                await fetch(URL_DA_API, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(novoEmprestimo) });
+                emprestimosAtuais.push(novoEmprestimo);
+                renderizarListas();
+                document.getElementById('loanForm').reset();
+            } catch (error) {
+                console.error("Erro ao enviar dados para a API:", error);
+                alert("Não foi possível salvar na nuvem. Verifique sua conexão ou a URL da API.");
+            } finally {
+                formButton.disabled = false;
+                showLoading(false);
+            }
+        }
+        
+        async function marcarComoPago(id) {
+            showLoading(true);
+            try {
+                const response = await fetch(`${URL_DA_API}?action=updateStatus&id=${id}`);
+                const result = await response.json();
+                if (result.status === "success") {
+                    const index = emprestimosAtuais.findIndex(emp => emp.id == id);
+                    if (index > -1) emprestimosAtuais[index].status = 'pago';
+                    renderizarListas();
+                } else {
+                    alert("Não foi possível atualizar o status na nuvem.");
+                }
+            } catch (error) {
+                console.error("Erro ao pagar:", error);
+                alert("Ocorreu um erro de comunicação ao tentar pagar.");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function apagarEmprestimo(id) {
+            const confirmou = confirm("Tem certeza que deseja apagar este empréstimo? Esta ação não pode ser desfeita.");
+            if (confirmou) {
+                showLoading(true);
+                try {
+                    const response = await fetch(`${URL_DA_API}?action=delete&id=${id}`);
+                    const result = await response.json();
+                    if (result.status === "success") {
+                        emprestimosAtuais = emprestimosAtuais.filter(emp => emp.id != id);
+                        renderizarListas();
+                    } else {
+                        alert("Não foi possível apagar o empréstimo da nuvem.");
+                    }
+                } catch (error) {
+                    console.error("Erro ao apagar:", error);
+                    alert("Ocorreu um erro de comunicação ao tentar apagar.");
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+
+        function renderizarListas() {
+            let lucroTotalGeral = 0;
+            emprestimosAtuais.forEach(emp => {
+                lucroTotalGeral += parseFloat(emp.valor) * 0.40;
+            });
+            const totalLucroElement = document.getElementById('total-lucro');
+            totalLucroElement.innerHTML = `Lucro Total (Ativos + Pagos): ${lucroTotalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+
+            const listaAtivosDiv = document.getElementById('listaAtivos');
+            const listaPagosDiv = document.getElementById('listaPagos');
+            listaAtivosDiv.innerHTML = '';
+            listaPagosDiv.innerHTML = '';
+            
+            const emprestimosAtivos = emprestimosAtuais.filter(emp => emp.status !== 'pago');
+            const emprestimosPagos = emprestimosAtuais.filter(emp => emp.status === 'pago');
+
+            if (emprestimosAtivos.length === 0) {
+                listaAtivosDiv.innerHTML = '<p style="text-align:center;">Nenhum empréstimo ativo.</p>';
+            } else {
+                emprestimosAtivos.sort((a, b) => new Date(a.dataPagamento) - new Date(b.dataPagamento));
+                emprestimosAtivos.forEach(emp => {
+                    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+                    const dataEmprestimo = new Date(emp.dataEmprestimo + "T00:00:00");
+                    const dataPagamento = new Date(emp.dataPagamento + "T00:00:00");
+                    const classeStatus = hoje > dataPagamento ? 'status-atrasado' : 'status-pendente';
+                    
+                    const valorTotal = parseFloat(emp.valor) * 1.40;
+                    const lucro = parseFloat(emp.valor) * 0.40;
+
+                    listaAtivosDiv.innerHTML += `
+                        <div class="emprestimo-item ${classeStatus}">
+                            <div>
+                                <strong>Cliente: ${emp.nome}</strong> (Credor: ${emp.credor})<br>
+                                <small>Emprestado em: ${dataEmprestimo.toLocaleDateString('pt-BR')}</small><br>
+                                <span>Valor a Pagar: ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br>
+                                <span style="color: #1a73e8; font-weight: 500;">Lucro: ${lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br>
+                                <span>Vencimento: ${dataPagamento.toLocaleDateString('pt-BR')}</span>
+                            </div>
+                            <div class="botoes-acao">
+                                <button class="btn-acao btn-pagar" onclick="marcarComoPago(${emp.id})">Pagar</button>
+                                <button class="btn-acao btn-apagar" onclick="apagarEmprestimo(${emp.id})">Apagar</button>
+                            </div>
+                        </div>`;
+                });
+            }
+            
+            if (emprestimosPagos.length === 0) {
+                listaPagosDiv.innerHTML = '<p style="text-align:center;">Nenhum empréstimo foi pago ainda.</p>';
+            } else {
+                emprestimosPagos.sort((a, b) => new Date(b.dataPagamento) - new Date(a.dataPagamento));
+                emprestimosPagos.forEach(emp => {
+                    const valorTotal = parseFloat(emp.valor) * 1.40;
+                    const lucro = parseFloat(emp.valor) * 0.40;
+                    const dataEmprestimo = new Date(emp.dataEmprestimo + "T00:00:00");
+
+                    listaPagosDiv.innerHTML += `
+                        <div class="emprestimo-item status-pago">
+                            <div>
+                                <strong>Cliente: ${emp.nome}</strong> (Credor: ${emp.credor})<br>
+                                <small>Emprestado em: ${dataEmprestimo.toLocaleDateString('pt-BR')}</small><br>
+                                <span>Valor Pago: ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br>
+                                <span style="color: #1a73e8; font-weight: 500;">Lucro: ${lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            </div>
+                            <div class="botoes-acao">
+                                <span>✅ Pago</span>
+                            </div>
+                        </div>`;
+                });
+            }
+        }
+
+        function openTab(event, tabName) {
+            const tabcontent = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+            const tablinks = document.getElementsByClassName("tab-link");
+            for (let i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+            document.getElementById(tabName).style.display = "block";
+            event.currentTarget.className += " active";
+        }
+    </script>
+</body>
+</html>
