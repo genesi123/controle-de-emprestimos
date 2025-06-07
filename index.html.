@@ -40,7 +40,7 @@
     <script>
         // ##################################################################
         // COLE A NOVA URL DA SUA API DO GOOGLE APPS SCRIPT AQUI
-        const URL_DA_API = "https://script.google.com/macros/s/AKfycbzFZdA2ZTigKTZj-9dkGhIf9sGWV2yLN9aCJzL_XRYhBcP855s-fkKFDLQUtBC1ZgjC8A/exec";
+        const URL_DA_API = "https://script.google.com/macros/s/AKfycbykZr0d1-S2u5WlGIyvj896KvespcAl8EKQ9QmQD2huO-t_l3hENUUNv6v3eNjSPTO1Uw/exec";
         // ##################################################################
 
         // Esta variável vai guardar os empréstimos enquanto a página estiver aberta
