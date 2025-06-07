@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Empréstimos Integrado</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #1c1e21; } .container { max-width: 800px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); } h1, h2 { text-align: center; color: #1877f2; } form { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; } .form-group { flex: 1 1 200px; } label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; } input[type="text"], input[type="date"], input[type="number"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #dddfe2; box-sizing: border-box; } .main-button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; background-color: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; } .main-button:hover:not(:disabled) { background-color: #166fe5; } .main-button:disabled { background-color: #a0bdf1; cursor: not-allowed; } .tab-nav { display: flex; border-bottom: 2px solid #dddfe2; margin-bottom: 20px; } .tab-link { background: none; border: none; padding: 15px 20px; cursor: pointer; font-size: 16px; font-weight: 600; color: #606770; border-bottom: 3px solid transparent; margin-bottom: -2px; } .tab-link.active { color: #1877f2; border-bottom-color: #1877f2; } .tab-content { display: none; } .tab-content.active { display: block; } .emprestimo-item { padding: 15px; margin-bottom: 10px; border-radius: 6px; border-left: 5px solid; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background-color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); } .status-pendente { border-left-color: #ffc107; } .status-atrasado { border-left-color: #dc3545; } .status-pago { border-left-color: #28a745; } .botoes-acao { display: flex; gap: 10px; } .btn-acao { padding: 8px 12px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; } .btn-pagar { background-color: #28a745; } .btn-apagar { background-color: #dc3545; } .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; } .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #3498db; width: 50px; height: 50px; animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #1c1e21; } .container { max-width: 800px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); } h1 { text-align: center; color: #1877f2; } h2.summary-title { text-align: center; margin: 5px 0; font-size: 1.2em; } form { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; } .form-group { flex: 1 1 200px; } label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; } input[type="text"], input[type="date"], input[type="number"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #dddfe2; box-sizing: border-box; } .main-button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; background-color: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; } .main-button:hover:not(:disabled) { background-color: #166fe5; } .main-button:disabled { background-color: #a0bdf1; cursor: not-allowed; } .tab-nav { display: flex; border-bottom: 2px solid #dddfe2; margin-bottom: 20px; } .tab-link { background: none; border: none; padding: 15px 20px; cursor: pointer; font-size: 16px; font-weight: 600; color: #606770; border-bottom: 3px solid transparent; margin-bottom: -2px; } .tab-link.active { color: #1877f2; border-bottom-color: #1877f2; } .tab-content { display: none; } .tab-content.active { display: block; } .emprestimo-item { padding: 15px; margin-bottom: 10px; border-radius: 6px; border-left: 5px solid; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background-color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); } .status-pendente { border-left-color: #ffc107; } .status-atrasado { border-left-color: #dc3545; } .status-pago { border-left-color: #28a745; } .botoes-acao { display: flex; gap: 10px; } .btn-acao { padding: 8px 12px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; } .btn-pagar { background-color: #28a745; } .btn-apagar { background-color: #dc3545; } .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; } .loader { border: 5px solid #f3f3f3; border-radius: 50%; border-top: 5px solid #3498db; width: 50px; height: 50px; animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay"><div class="loader"></div></div>
     <div class="container">
         <h1>Controle de Empréstimos</h1>
-        <h2 id="total-lucro" style="text-align: center; color: #1a73e8; margin-bottom: 20px;"></h2>
+        <h2 id="total-emprestado" class="summary-title" style="color: #333;"></h2>
+        <h2 id="total-a-receber" class="summary-title" style="color: #c79100;"></h2>
+        <h2 id="lucro-potencial" class="summary-title" style="color: #1a73e8;"></h2>
+        <h2 id="lucro-realizado" class="summary-title" style="color: #1e8e3e; margin-bottom: 25px;"></h2>
         
         <form id="loanForm">
             <div class="form-group"><label for="nome">Nome do Cliente:</label><input type="text" id="nome" required></div>
@@ -27,8 +30,8 @@
             <button class="tab-link active" onclick="openTab(event, 'ativos')">Empréstimos Ativos</button>
             <button class="tab-link" onclick="openTab(event, 'pagos')">Histórico de Pagos</button>
         </div>
-        <div id="ativos" class="tab-content active"><h2 >Pendentes e Atrasados</h2><div id="listaAtivos"></div></div>
-        <div id="pagos" class="tab-content"><h2>Já Pagos</h2><div id="listaPagos"></div></div>
+        <div id="ativos" class="tab-content active"><h2 style="color:#1877f2;">Pendentes e Atrasados</h2><div id="listaAtivos"></div></div>
+        <div id="pagos" class="tab-content"><h2 style="color:#1877f2;">Já Pagos</h2><div id="listaPagos"></div></div>
     </div>
 
     <script>
@@ -146,20 +149,38 @@
         }
 
         function renderizarListas() {
-            let lucroTotalGeral = 0;
-            emprestimosAtuais.forEach(emp => {
-                lucroTotalGeral += parseFloat(emp.valor) * 0.40;
-            });
-            const totalLucroElement = document.getElementById('total-lucro');
-            totalLucroElement.innerHTML = `Lucro Total (Ativos + Pagos): ${lucroTotalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+            const emprestimosAtivos = emprestimosAtuais.filter(emp => emp.status !== 'pago');
+            const emprestimosPagos = emprestimosAtuais.filter(emp => emp.status === 'pago');
 
+            // --- NOVOS CÁLCULOS GERAIS ---
+            let valorTotalEmprestado = 0;
+            let totalAReceber = 0;
+            let lucroPotencial = 0;
+            let lucroRealizado = 0;
+
+            emprestimosAtuais.forEach(emp => {
+                valorTotalEmprestado += parseFloat(emp.valor);
+            });
+
+            emprestimosAtivos.forEach(emp => {
+                totalAReceber += parseFloat(emp.valor) * 1.40;
+                lucroPotencial += parseFloat(emp.valor) * 0.40;
+            });
+
+            emprestimosPagos.forEach(emp => {
+                lucroRealizado += parseFloat(emp.valor) * 0.40;
+            });
+
+            document.getElementById('total-emprestado').innerHTML = `Capital Emprestado: ${valorTotalEmprestado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+            document.getElementById('total-a-receber').innerHTML = `Total a Receber (Pendentes): ${totalAReceber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+            document.getElementById('lucro-potencial').innerHTML = `Lucro Potencial (Pendentes): ${lucroPotencial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+            document.getElementById('lucro-realizado').innerHTML = `Lucro Realizado (Pagos): ${lucroRealizado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+            // --- FIM DOS NOVOS CÓDIGOS ---
+            
             const listaAtivosDiv = document.getElementById('listaAtivos');
             const listaPagosDiv = document.getElementById('listaPagos');
             listaAtivosDiv.innerHTML = '';
             listaPagosDiv.innerHTML = '';
-            
-            const emprestimosAtivos = emprestimosAtuais.filter(emp => emp.status !== 'pago');
-            const emprestimosPagos = emprestimosAtuais.filter(emp => emp.status === 'pago');
 
             if (emprestimosAtivos.length === 0) {
                 listaAtivosDiv.innerHTML = '<p style="text-align:center;">Nenhum empréstimo ativo.</p>';
@@ -170,24 +191,9 @@
                     const dataEmprestimo = new Date(emp.dataEmprestimo + "T00:00:00");
                     const dataPagamento = new Date(emp.dataPagamento + "T00:00:00");
                     const classeStatus = hoje > dataPagamento ? 'status-atrasado' : 'status-pendente';
-                    
                     const valorTotal = parseFloat(emp.valor) * 1.40;
                     const lucro = parseFloat(emp.valor) * 0.40;
-
-                    listaAtivosDiv.innerHTML += `
-                        <div class="emprestimo-item ${classeStatus}">
-                            <div>
-                                <strong>Cliente: ${emp.nome}</strong> (Credor: ${emp.credor})<br>
-                                <small>Emprestado em: ${dataEmprestimo.toLocaleDateString('pt-BR')}</small><br>
-                                <span>Valor a Pagar: ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br>
-                                <span style="color: #1a73e8; font-weight: 500;">Lucro: ${lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br>
-                                <span>Vencimento: ${dataPagamento.toLocaleDateString('pt-BR')}</span>
-                            </div>
-                            <div class="botoes-acao">
-                                <button class="btn-acao btn-pagar" onclick="marcarComoPago(${emp.id})">Pagar</button>
-                                <button class="btn-acao btn-apagar" onclick="apagarEmprestimo(${emp.id})">Apagar</button>
-                            </div>
-                        </div>`;
+                    listaAtivosDiv.innerHTML += `<div class="emprestimo-item ${classeStatus}"><div><strong>Cliente: ${emp.nome}</strong> (Credor: ${emp.credor})<br><small>Emprestado em: ${dataEmprestimo.toLocaleDateString('pt-BR')}</small><br><span>Valor a Pagar: ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span style="color: #1a73e8; font-weight: 500;">Lucro: ${lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span>Vencimento: ${dataPagamento.toLocaleDateString('pt-BR')}</span></div><div class="botoes-acao"><button class="btn-acao btn-pagar" onclick="marcarComoPago(${emp.id})">Pagar</button><button class="btn-acao btn-apagar" onclick="apagarEmprestimo(${emp.id})">Apagar</button></div></div>`;
                 });
             }
             
@@ -199,19 +205,7 @@
                     const valorTotal = parseFloat(emp.valor) * 1.40;
                     const lucro = parseFloat(emp.valor) * 0.40;
                     const dataEmprestimo = new Date(emp.dataEmprestimo + "T00:00:00");
-
-                    listaPagosDiv.innerHTML += `
-                        <div class="emprestimo-item status-pago">
-                            <div>
-                                <strong>Cliente: ${emp.nome}</strong> (Credor: ${emp.credor})<br>
-                                <small>Emprestado em: ${dataEmprestimo.toLocaleDateString('pt-BR')}</small><br>
-                                <span>Valor Pago: ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br>
-                                <span style="color: #1a73e8; font-weight: 500;">Lucro: ${lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                            </div>
-                            <div class="botoes-acao">
-                                <span>✅ Pago</span>
-                            </div>
-                        </div>`;
+                    listaPagosDiv.innerHTML += `<div class="emprestimo-item status-pago"><div><strong>Cliente: ${emp.nome}</strong> (Credor: ${emp.credor})<br><small>Emprestado em: ${dataEmprestimo.toLocaleDateString('pt-BR')}</small><br><span>Valor Pago: ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span style="color: #1a73e8; font-weight: 500;">Lucro: ${lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></div><div class="botoes-acao"><span>✅ Pago</span></div></div>`;
                 });
             }
         }
