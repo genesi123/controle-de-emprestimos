@@ -40,7 +40,7 @@
     <script>
         // ##################################################################
         // COLE A URL DA SUA API DO GOOGLE APPS SCRIPT AQUI
-        const URL_DA_API = "https://script.google.com/macros/s/AKfycbydLAK0rbQdMrSnD_TvWvy42LK7mMyz07kDvA3C6qy2nTQi645R_vr5qg8IL6pxvR0BWQ/exec";
+        const URL_DA_API = "https://script.google.com/macros/s/AKfycbzsrZHcuteQj8H_1pkWXLNqop8QG2GiXW915vizbIxfn1HMJT3KunZZbwfbIstYkrTxmA/exec";
         // ##################################################################
 
         let emprestimosAtuais = [];
@@ -79,10 +79,8 @@
         async function salvarDados() {
             const id = loanIdInput.value;
             if (id) {
-                // Modo Edição
                 await editarEmprestimo(id);
             } else {
-                // Modo Adicionar
                 await adicionarEmprestimo();
             }
         }
@@ -91,7 +89,6 @@
             mainSubmitButton.disabled = true;
             showLoading(true);
             const novoEmprestimo = {
-                action: 'add', // Ação para a API
                 id: Date.now(),
                 nome: document.getElementById('nome').value,
                 credor: document.getElementById('credor').value,
@@ -109,11 +106,15 @@
             }
 
             try {
-                // Usamos POST para enviar os dados
-                await fetch(URL_DA_API, { method: 'POST', body: JSON.stringify(novoEmprestimo), headers: {'Content-Type': 'application/json'} });
-                emprestimosAtuais.push(novoEmprestimo);
-                renderizarListas();
-                loanForm.reset();
+                const response = await fetch(URL_DA_API, { method: 'POST', body: JSON.stringify(novoEmprestimo), headers: {'Content-Type': 'application/json'} });
+                const result = await response.json();
+                if (result.status === "success") {
+                    emprestimosAtuais.push(novoEmprestimo);
+                    renderizarListas();
+                    loanForm.reset();
+                } else {
+                    alert("A API retornou um erro ao tentar adicionar.");
+                }
             } catch (error) {
                 console.error("Erro ao enviar dados para a API:", error);
                 alert("Não foi possível salvar na nuvem. Verifique sua conexão ou a URL da API.");
@@ -127,24 +128,29 @@
             mainSubmitButton.disabled = true;
             showLoading(true);
             const emprestimoAtualizado = {
-                action: 'edit', // Ação para a API
+                action: 'edit',
                 id: id,
                 nome: document.getElementById('nome').value,
                 credor: document.getElementById('credor').value,
                 valor: document.getElementById('valor').value,
                 dataEmprestimo: document.getElementById('dataEmprestimo').value,
                 dataPagamento: document.getElementById('dataPagamento').value,
-                status: emprestimosAtuais.find(emp => emp.id == id).status // Mantém o status atual
+                status: emprestimosAtuais.find(emp => emp.id == id).status
             };
             
             try {
-                await fetch(URL_DA_API, { method: 'POST', body: JSON.stringify(emprestimoAtualizado), headers: {'Content-Type': 'application/json'} });
-                const index = emprestimosAtuais.findIndex(emp => emp.id == id);
-                if (index > -1) {
-                    emprestimosAtuais[index] = emprestimoAtualizado;
+                const response = await fetch(URL_DA_API, { method: 'POST', body: JSON.stringify(emprestimoAtualizado), headers: {'Content-Type': 'application/json'} });
+                const result = await response.json();
+                if (result.status === "success") {
+                    const index = emprestimosAtuais.findIndex(emp => emp.id == id);
+                    if (index > -1) {
+                        emprestimosAtuais[index] = emprestimoAtualizado;
+                    }
+                    renderizarListas();
+                    cancelarEdicao();
+                } else {
+                    alert("A API retornou um erro ao tentar editar.");
                 }
-                renderizarListas();
-                cancelarEdicao(); // Limpa o formulário e volta ao modo de adição
             } catch (error) {
                 alert("Não foi possível editar na nuvem.");
             } finally {
@@ -165,7 +171,7 @@
                 
                 mainSubmitButton.textContent = 'Salvar Alterações';
                 cancelEditButton.style.display = 'block';
-                window.scrollTo(0, 0); // Rola a página para o topo
+                window.scrollTo(0, 0);
             }
         }
 
@@ -179,7 +185,7 @@
         async function marcarComoPago(id) {
             showLoading(true);
             try {
-                const response = await fetch(`${URL_DA_API}?action=updateStatus&id=${id}`);
+                const response = await fetch(`<span class="math-inline">\{URL\_DA\_API\}?action\=updateStatus&id\=</span>{id}`);
                 const result = await response.json();
                 if (result.status === "success") {
                     const index = emprestimosAtuais.findIndex(emp => emp.id == id);
@@ -201,7 +207,7 @@
             if (confirmou) {
                 showLoading(true);
                 try {
-                    const response = await fetch(`${URL_DA_API}?action=delete&id=${id}`);
+                    const response = await fetch(`<span class="math-inline">\{URL\_DA\_API\}?action\=delete&id\=</span>{id}`);
                     const result = await response.json();
                     if (result.status === "success") {
                         emprestimosAtuais = emprestimosAtuais.filter(emp => emp.id != id);
@@ -240,7 +246,7 @@
                     const dataPagamento = new Date(emp.dataPagamento + "T00:00:00");
                     const classeStatus = hoje > dataPagamento ? 'status-atrasado' : 'status-pendente';
                     const valorEmprestado = parseFloat(emp.valor); const valorTotal = valorEmprestado * 1.40; const lucro = valorEmprestado * 0.40;
-                    listaAtivosDiv.innerHTML += `<div class="emprestimo-item ${classeStatus}"><div><strong>Cliente: ${emp.nome}</strong> (Credor: ${emp.credor})<br><small>Emprestado em: ${dataEmprestimo.toLocaleDateString('pt-BR')}</small><br><span style="font-weight: 500;">Valor Emprestado: ${valorEmprestado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span>Valor a Pagar: ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span style="color: #1a73e8; font-weight: 500;">Lucro: ${lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span>Vencimento: ${dataPagamento.toLocaleDateString('pt-BR')}</span></div><div class="botoes-acao"><button class="btn-acao btn-editar" onclick="preencherFormularioParaEditar(${emp.id})">Editar</button><button class="btn-acao btn-pagar" onclick="marcarComoPago(${emp.id})">Pagar</button><button class="btn-acao btn-apagar" onclick="apagarEmprestimo(${emp.id})">Apagar</button></div></div>`;
+                    listaAtivosDiv.innerHTML += `<div class="emprestimo-item ${classeStatus}"><div><strong>Cliente: ${emp.nome}</strong> (Credor: ${emp.credor})<br><small>Emprestado em: ${dataEmprestimo.toLocaleDateString('pt-BR')}</small><br><span style="font-weight: 500;">Valor Emprestado: ${valorEmprestado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span>Valor a Pagar: ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span style="color: #1a73e8; font-weight: 500;">Lucro: ${lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span><br><span>Vencimento: <span class="math-inline">\{dataPagamento\.toLocaleDateString\('pt\-BR'\)\}</span\></div\><div class\="botoes\-acao"\><button class\="btn\-acao btn\-editar" onclick\="preencherFormularioParaEditar\(</span>{emp.id})">Editar</button><button class="btn-acao btn-pagar" onclick="marcarComoPago(<span class="math-inline">\{emp\.id\}\)"\>Pagar</button\><button class\="btn\-acao btn\-apagar" onclick\="apagarEmprestimo\(</span>{emp.id})">Apagar</button></div></div>`;
                 });
             }
             
@@ -266,3 +272,5 @@
     </script>
 </body>
 </html>
+}
+faça a correcao do codigo e o deixe o mais completo possivel
